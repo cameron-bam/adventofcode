@@ -1,13 +1,15 @@
-const {readInput, computeTotalMass, logError, logResult} = require("./lib");
+const {readInput, computeTotalMass, logError} = require("./lib");
 
-function getFuelFromMass(mass) {
+function getFuelFromMassAndFuel(mass) {
     const fuel = Math.floor(mass / 3) - 2;;
-    return fuel <= 0 ? 0 : (fuel + getFuelFromMass(fuel));
+    return fuel <= 0 ? 0 : (fuel + getFuelFromMassAndFuel(fuel));
 }
 
-(function() {
-    readInput("../input/day1/input")
-    .then((massList) => computeTotalMass(massList, getFuelFromMass))
-    .then(logResult)
-    .catch(logError)
-})()
+function solve() {
+    return readInput("../input/day1/input")
+    .then((massList) => computeTotalMass(massList, getFuelFromMassAndFuel))
+    .then((result) => console.log(`Part 2 Total Fuel: ${result}`))
+    .catch(logError);
+}
+
+module.exports = {getFuelFromMassAndFuel, solve};

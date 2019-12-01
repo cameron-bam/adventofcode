@@ -6,5 +6,12 @@
   "repository": "https://github.com/cameron-bam/adventofcode.git",
   "author": "Cameron White <cameronwhite16@gmail.com>",
   "license": "MIT",
-  "private": false
+  "private": false,
+  "scripts": {
+    "test": "mocha 20*/**/test.js",
+    "solve": "node index.js"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.2"
+  }
 }

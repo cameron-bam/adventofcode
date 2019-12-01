@@ -34,10 +34,6 @@ exports.computeTotalMass = (listOfMass, fuelComputeFunc) => {
     }, 0);
 }
 
-exports.logResult = (totalFuel) => {
-    console.log(`Fuel requirements computed! Total fuel: ${totalFuel}\n`)
-}
-
 exports.logError = (err) => {
     console.error(`Error while computing fuel requirements: ${err.message}`);
 }
