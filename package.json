@@ -13,5 +13,8 @@
   },
   "devDependencies": {
     "mocha": "^6.2.2"
+  },
+  "dependencies": {
+    "glob": "^7.1.6"
   }
 }

@@ -7,8 +7,7 @@ function computeFuelForModule(mass) {
 function solve() {
     return readInput("../input/day1/input")
     .then((massList) => computeTotalMass(massList, computeFuelForModule))
-    .then((result) => console.log(`Part 1 Total Fuel: ${result}`))
-    .catch(logError);
+    .then((result) => console.log(`Day 1, Part 1 Total Fuel: ${result}`))
 }
 
 module.exports = {

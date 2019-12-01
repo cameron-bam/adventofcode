@@ -8,7 +8,7 @@ function getFuelFromMassAndFuel(mass) {
 function solve() {
     return readInput("../input/day1/input")
     .then((massList) => computeTotalMass(massList, getFuelFromMassAndFuel))
-    .then((result) => console.log(`Part 2 Total Fuel: ${result}`))
+    .then((result) => console.log(`Day 1, Part 2 Total Fuel: ${result}`))
     .catch(logError);
 }
 

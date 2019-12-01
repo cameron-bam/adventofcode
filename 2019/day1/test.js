@@ -1,6 +1,6 @@
 const assert = require('assert');
-const {computeFuelForModule} = require("./part1");
-const {getFuelFromMassAndFuel} = require("./part2");
+const {computeFuelForModule} = require("./part1.soln");
+const {getFuelFromMassAndFuel} = require("./part2.soln");
 
 describe("Day 1, part 1", () => {
     it('should calculate fuel requirements for fuel mass 12', () =>{

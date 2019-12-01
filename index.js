@@ -1,3 +1,14 @@
-const adc2019 = require("./2019");
+var glob = require('glob');
 
-adc2019.solve();
+glob("2019/**/*.soln.js", (err, files) => {
+    console.log("ADC 2019 solutions:");
+    files
+     .map((file) => {
+         file = file.substring(0, file.length - 3);
+         return `./${file}`;
+     })
+     .map(require)
+     .reduce((prev, cur) => {
+         return !!prev ? prev.then(() => cur.solve()) : cur.solve();
+     }, undefined);
+});
