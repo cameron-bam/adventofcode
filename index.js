@@ -8,7 +8,5 @@ glob("2019/**/*.soln.js", (err, files) => {
          return `./${file}`;
      })
      .map(require)
-     .reduce((prev, cur) => {
-         return !!prev ? prev.then(() => cur.solve()) : cur.solve();
-     }, undefined);
+     .reduce((prev, cur) => !!prev ? prev.then(() => cur.solve()) : cur.solve(), undefined);
 });
