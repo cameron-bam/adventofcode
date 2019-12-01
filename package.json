@@ -1,0 +1,10 @@
+{
+  "name": "adventofcode",
+  "version": "1.0.0",
+  "description": "https://adventofcode.com/",
+  "main": "index.js",
+  "repository": "https://github.com/cameron-bam/adventofcode.git",
+  "author": "Cameron White <cameronwhite16@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
