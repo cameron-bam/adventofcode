@@ -10,6 +10,6 @@ glob("2019/**/*.soln.js", (err, files) => {
      })
      .map(require)
      .reduce((prev, cur) => !!prev ? prev.then(() => cur.solve()) : cur.solve(), undefined)
-     .then(() => readInput(__dirname + "/santa_ascii.txt"))
+     .then(() => readInput(__dirname + "/resources/santa_ascii.txt"))
      .then((santa) => console.log("\n\n\n" + santa));
 });
