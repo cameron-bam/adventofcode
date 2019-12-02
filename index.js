@@ -1,5 +1,5 @@
 const glob = require('glob');
-const {readInput} = require('./2019/day1/lib');
+const readInput = require('./common/readInput');
 
 glob("2019/**/*.soln.js", (err, files) => {
     console.log("ADC 2019 solutions:");

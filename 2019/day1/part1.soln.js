@@ -1,4 +1,5 @@
-const {readInput, processInput, computeTotalMass, logError} = require("./lib");
+const {processInput, computeTotalMass, logError} = require("./lib");
+const readInput = require("../../common/readInput");
 
 function computeFuelForModule(mass) {
     return Math.floor(mass / 3) - 2;
