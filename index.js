@@ -1,4 +1,5 @@
-var glob = require('glob');
+const glob = require('glob');
+const {readInput} = require('./2019/day1/lib');
 
 glob("2019/**/*.soln.js", (err, files) => {
     console.log("ADC 2019 solutions:");
@@ -8,5 +9,7 @@ glob("2019/**/*.soln.js", (err, files) => {
          return `./${file}`;
      })
      .map(require)
-     .reduce((prev, cur) => !!prev ? prev.then(() => cur.solve()) : cur.solve(), undefined);
+     .reduce((prev, cur) => !!prev ? prev.then(() => cur.solve()) : cur.solve(), undefined)
+     .then(() => readInput(__dirname + "/santa_ascii.txt"))
+     .then((santa) => console.log("\n\n\n" + santa));
 });

@@ -1,9 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-function processInput(fileData) {
+exports.processInput = function processInput(fileData) {
     return fileData
-    .toString()
     .split("\n")
     .map((mass) => mass.trim())
     .filter((massStr) => massStr.length > 0)
@@ -14,12 +13,12 @@ function processInput(fileData) {
     });
 }
 
-exports.readInput = (relPath) => {
+exports.readInput = (pathStr) => {
     return new Promise((resolve, reject) => {
-        const loc = path.parse(__dirname + "/" + relPath);
-        fs.readFile(`${loc.dir}/${loc.name}`, (err, data) => {
+        const loc = path.parse(pathStr);
+        fs.readFile(`${loc.dir}/${loc.base}`, (err, data) => {
             if (err) reject(err);
-            else resolve(processInput(data));
+            else resolve(data.toString());
         });
     });
 }
