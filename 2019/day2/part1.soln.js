@@ -1,29 +1,27 @@
 const readInput = require("../../common/readInput");
 
+function getAddresses(program, pointer) {
+    return [program[pointer + 1], program[pointer + 2], program[pointer + 3]]
+}
+
 function add(program, pointer) {
-    const addr1 = program[pointer + 1];
-    const addr2 = program[pointer + 2];
-    const addr3 = program[pointer + 3];
-    const val = program[addr1] + program[addr2];
-    program[addr3] = val;
-    return pointer + 4;
+    const addrs = getAddresses(program, pointer);
+    const val = program[addrs[0]] + program[addrs[1]];
+    program[addrs[2]] = val;
+    return pointer + addrs.length + 1;
 }
 
 function multiply(program, pointer) {
-    const addr1 = program[pointer + 1];
-    const addr2 = program[pointer + 2];
-    const addr3 = program[pointer + 3];
-    const val = program[addr1] * program[addr2];
-    program[addr3] = val;
-    return pointer + 4;
+    const addrs = getAddresses(program, pointer);
+    const val = program[addrs[0]] * program[addrs[1]];
+    program[addrs[2]] = val;
+    return pointer + addrs.length + 1;
 }
 
 function intcodeComputer(program) {
     let pointer = 0;
-    let lastPointer = -1
 
-    while (program[pointer] != 99 && lastPointer != pointer) {
-        lastPointer = pointer;
+    while (program[pointer] != 99) {
         switch(program[pointer]) {
             case 1: {
                 pointer = add(program, pointer);
@@ -35,7 +33,7 @@ function intcodeComputer(program) {
             }
             default:
                 console.log(`Encountered unknown code ${program[pointer]} at position ${pointer}`);
-                break;
+                return;
         }
     }
 }
@@ -47,7 +45,7 @@ function solve() {
         .split(',')
         .map((intcode) => intcode.trim())
         .filter((intcode) => intcode.length > 0)
-        .map(parseInt)
+        .map((intcode) => parseInt(intcode))
     })
     .then((program) => {
         program[1] = 12;
