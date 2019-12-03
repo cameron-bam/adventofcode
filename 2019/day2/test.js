@@ -1,5 +1,5 @@
-const {intcodeComputer} = require("./part1.soln");
-const {runProgram, nounVerbMath} = require("./part2.soln");
+const {intcodeComputer, runProgram} = require("./intcodeComputer");
+const {nounVerbMath} = require("./part2.soln");
 const assert = require("assert");
 
 describe("Day 2, part 1 - intcode computer", () => {
