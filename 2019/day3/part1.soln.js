@@ -1,3 +1,5 @@
+const readInput = require("../../common/readInput");
+
 class Coord {
     static fromString(string) {
         const xy = string.split(",");
@@ -67,7 +69,7 @@ function plotPath(path, map, startingPoint, intersections, wireId) {
 function plotWire(wirePath, map, intersections, wireId) {
     let lastPoint = "0,0";
 
-    wirePath.forEach((pathSegment, index) => {
+    wirePath.forEach((pathSegment) => {
         lastPoint = plotPath(pathSegment, map, lastPoint, intersections, wireId);
     });
 }
@@ -90,11 +92,19 @@ function findShortestDistance(wirePaths) {
 function processInput(string) {
     return string
     .split("\n")
-    .map((strPath) => strPath.split(",").map((pathSeg) => pathSeg.trim()));
+    .map((strPath) => strPath
+        .split(",")
+        .map((pathSeg) => pathSeg.trim())
+        .filter((pathSeg) => pathSeg.length > 0))
+    .filter(wirePath => wirePath.length > 0);
 }
 
 function solve() {
-    return Promise.resolve();
+    return readInput(__dirname + "/../input/day3/input")
+    .then(processInput)
+    .then((wirePaths) => {
+        console.log(`Day 3, part 1: Shortest distance to intersection point is ${findShortestDistance(wirePaths)}`);
+    })
 }
 
-module.exports = {findShortestDistance, processInput};
+module.exports = {findShortestDistance, processInput, solve};
