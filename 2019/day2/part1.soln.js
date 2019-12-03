@@ -1,5 +1,13 @@
 const readInput = require("../../common/readInput");
 
+function processInput(data) {
+    return data
+    .split(',')
+    .map((intcode) => intcode.trim())
+    .filter((intcode) => intcode.length > 0)
+    .map((intcode) => parseInt(intcode));
+}
+
 function getAddresses(program, pointer) {
     return [program[pointer + 1], program[pointer + 2], program[pointer + 3]]
 }
@@ -40,13 +48,7 @@ function intcodeComputer(program) {
 
 function solve() {
    return readInput(__dirname + "/../input/day2/input")
-    .then((data) => {
-       return data
-        .split(',')
-        .map((intcode) => intcode.trim())
-        .filter((intcode) => intcode.length > 0)
-        .map((intcode) => parseInt(intcode))
-    })
+    .then(processInput)
     .then((program) => {
         program[1] = 12;
         program[2] = 2;
@@ -56,4 +58,4 @@ function solve() {
     })
 }
 
-module.exports = {intcodeComputer, solve}
+module.exports = {intcodeComputer, solve, processInput}
