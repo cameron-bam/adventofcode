@@ -1,8 +1,14 @@
 const Coord = require("./coord");
 
-function plotPath(path, map, startingPoint, intersections, wireId) {
-    const direction = path[0];
-    const distance = parseInt(path.substring(1));
+function parsePathSegment(pathSegment) {
+    const direction = pathSegment[0];
+    const distance = parseInt(pathSegment.substring(1));
+    
+    return {direction, distance};
+}
+
+function plotPath(path, map, startingPoint, intersections, wireId, targetIntersection) {
+    const {direction, distance} = parsePathSegment(path);
     let curCoord = Coord.fromString(startingPoint);
 
     if (Number.isNaN(distance)) throw new Error(`Couldn't parse path ${path}: distance was ${distance}`);
@@ -25,11 +31,15 @@ function plotPath(path, map, startingPoint, intersections, wireId) {
                 throw new Error(`Unrecognized direction ${direction}!`)
         }
 
-        const crossedWireId = map[curCoord.toString()]
+        const crossedWireIds = map[curCoord.toString()] || []
 
-        if (!!crossedWireId && wireId != crossedWireId) intersections.push(curCoord);
+        if (crossedWireIds.length > 0 && crossedWireIds.indexOf(wireId) == -1) intersections.push(curCoord);
         
-        map[curCoord.toString()] = wireId;
+        crossedWireIds.push(wireId);
+
+        map[curCoord.toString()] = crossedWireIds;
+
+        if (curCoord.toString() == targetIntersection) return curCoord.toString();
     }
 
     return curCoord.toString();
@@ -43,6 +53,27 @@ function plotWire(wirePath, map, intersections, wireId) {
     });
 }
 
+function findDistanceToIntersection(wirePath, targetIntersection) {
+    const map = {};
+    const intersections = [];
+    const wireId = 1;
+    let lastPoint = "0,0";
+    let intersectionFound = false;
+
+    for (let i = 0; i < wirePath.length; i += 1) {
+        lastPoint = plotPath(wirePath[i], map, lastPoint, intersections, wireId, targetIntersection);
+
+        if (lastPoint == targetIntersection) {
+            intersectionFound = true;
+            break;
+        }
+    }
+
+    if (!intersectionFound) throw new Error("Could not find intersection on wire path!");
+
+    return Object.getOwnPropertyNames(map).length;
+}
+
 function findIntersections(wirePaths) {
     const map = {};
     const intersections = [];
@@ -52,4 +83,4 @@ function findIntersections(wirePaths) {
     return intersections;
 }
 
-module.exports = {plotWire, findIntersections};
+module.exports = {plotWire, findIntersections, findDistanceToIntersection};
