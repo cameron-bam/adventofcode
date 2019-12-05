@@ -7,7 +7,7 @@ function parsePathSegment(pathSegment) {
     return {direction, distance};
 }
 
-function plotPath(path, map, startingPoint, intersections, wireId, targetIntersection) {
+function plotPath(path, map, startingPoint, intersections, wireId, previousDistance) {
     const {direction, distance} = parsePathSegment(path);
     let curCoord = Coord.fromString(startingPoint);
 
@@ -31,15 +31,19 @@ function plotPath(path, map, startingPoint, intersections, wireId, targetInterse
                 throw new Error(`Unrecognized direction ${direction}!`)
         }
 
-        const crossedWireIds = map[curCoord.toString()] || []
+        const coordInfo = map[curCoord.toString()] || {}; 
 
-        if (crossedWireIds.length > 0 && crossedWireIds.indexOf(wireId) == -1) intersections.push(curCoord);
+        if (!coordInfo[wireId]) {
+            if (Object.getOwnPropertyNames(coordInfo).length > 0) intersections.push(curCoord);
+
+            coordInfo[wireId] = {
+                wireLengths: []
+            }
+        }
         
-        crossedWireIds.push(wireId);
+        coordInfo[wireId].wireLengths.push(previousDistance + i + 1);
 
-        map[curCoord.toString()] = crossedWireIds;
-
-        if (curCoord.toString() == targetIntersection) return curCoord.toString();
+        map[curCoord.toString()] = coordInfo;
     }
 
     return curCoord.toString();
@@ -47,31 +51,12 @@ function plotPath(path, map, startingPoint, intersections, wireId, targetInterse
 
 function plotWire(wirePath, map, intersections, wireId) {
     let lastPoint = "0,0";
+    let totalDistance = 0;
 
     wirePath.forEach((pathSegment) => {
-        lastPoint = plotPath(pathSegment, map, lastPoint, intersections, wireId);
+        lastPoint = plotPath(pathSegment, map, lastPoint, intersections, wireId, totalDistance);
+        totalDistance += parsePathSegment(pathSegment).distance;
     });
-}
-
-function findDistanceToIntersection(wirePath, targetIntersection) {
-    const map = {};
-    const intersections = [];
-    const wireId = 1;
-    let lastPoint = "0,0";
-    let intersectionFound = false;
-
-    for (let i = 0; i < wirePath.length; i += 1) {
-        lastPoint = plotPath(wirePath[i], map, lastPoint, intersections, wireId, targetIntersection);
-
-        if (lastPoint == targetIntersection) {
-            intersectionFound = true;
-            break;
-        }
-    }
-
-    if (!intersectionFound) throw new Error("Could not find intersection on wire path!");
-
-    return Object.getOwnPropertyNames(map).length;
 }
 
 function findIntersections(wirePaths) {
@@ -80,7 +65,7 @@ function findIntersections(wirePaths) {
 
     wirePaths.forEach((wirePath, index) => plotWire(wirePath, map, intersections, index + 1));
 
-    return intersections;
+    return {intersections, map};
 }
 
-module.exports = {plotWire, findIntersections, findDistanceToIntersection};
+module.exports = {plotWire, findIntersections};

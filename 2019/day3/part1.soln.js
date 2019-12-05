@@ -4,6 +4,7 @@ const parsePaths = require("./parsePaths");
 
 function findShortestDistance(wirePaths) {
     return findIntersections(wirePaths)
+    .intersections
     .reduce((prevValue, curValue) => {
         if (curValue.getManhattanDistance() < prevValue) {
             return curValue.getManhattanDistance();

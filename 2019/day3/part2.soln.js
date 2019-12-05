@@ -1,18 +1,19 @@
 const readInput = require("../../common/readInput");
-const {findIntersections, findDistanceToIntersection} = require("./plot");
+const {findIntersections} = require("./plot");
 const parsePaths = require("./parsePaths");
 
 function findShortestDistanceToIntersections(wirePaths) {
-    const intersections = findIntersections(wirePaths);
+    const {intersections, map} = findIntersections(wirePaths);
 
     return intersections
-        .map((intersection) => {
-            return wirePaths
-                .map((wirePath) => findDistanceToIntersection(wirePath, intersection))
-                .reduce((prev, cur) => {
-                    return prev + cur;
-                }, 0)
-            })
+        .map((intersection) => map[intersection.toString()])
+        .map((coordInfo) => {
+            return Object
+                .getOwnPropertyNames(coordInfo)
+                .reduce((prev, next) => {
+                    return prev + coordInfo[next].wireLengths.reduce((prev, next) => Math.min(prev, next), Infinity);
+                }, 0);
+        })
         .reduce((prev, cur) => Math.min(prev, cur), Infinity);
 }
 
