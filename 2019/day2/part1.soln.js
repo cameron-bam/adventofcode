@@ -1,4 +1,4 @@
-const {runProgram, readProgramFromFile} = require("./intcodeComputer");
+const {runProgram, readProgramFromFile} = require("../lib/intcodeComputer");
 
 function solve() {
    return readProgramFromFile(__dirname + "/../input/day2/input")

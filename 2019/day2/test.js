@@ -1,4 +1,4 @@
-const {intcodeComputer, runProgram} = require("./intcodeComputer");
+const {intcodeComputer, runProgram} = require("../lib/intcodeComputer");
 const {nounVerbMath} = require("./part2.soln");
 const assert = require("assert");
 

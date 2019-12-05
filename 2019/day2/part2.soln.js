@@ -1,4 +1,4 @@
-const {runProgram, readProgramFromFile} = require("./intcodeComputer");
+const {runProgram, readProgramFromFile} = require("../lib/intcodeComputer");
 
 function findNounVerbForValue(program, expectedValue) {
     for (let noun = 0; noun < 100; noun += 1) {
