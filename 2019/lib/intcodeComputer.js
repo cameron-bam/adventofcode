@@ -24,9 +24,8 @@ function multiply(program, pointer) {
     return pointer + 4;
 }
 
-function readValue(program, pointer) {
-    const paramVal = getParam(0, program, pointer);
-    console.log(`Intcode Computer: read value ${paramVal}`);
+function readValue(program, pointer, userOutput) {
+    userOutput.push(getParam(0, program, pointer));
     return pointer + 2;
 }
 
@@ -35,7 +34,29 @@ function storeInput(program, pointer, userInput) {
     return pointer + 2;
 }
 
-function intcodeComputer(program, userInput = []) {
+function jumpIfTrue(program, pointer) {
+    const param1 = getParam(0, program, pointer);
+    if (param1 != 0) return getParam(1, program, pointer);
+    return pointer + 3;
+}
+
+function jumpIfFalse(program, pointer) {
+    const param1 = getParam(0, program, pointer);
+    if (param1 === 0) return getParam(1, program, pointer);
+    return pointer + 3;
+}
+
+function lessThan(program, pointer) {
+    program[program[pointer + 3]] = getParam(0, program, pointer) < getParam(1, program, pointer) ? 1 : 0;
+    return pointer + 4;
+}
+
+function equals(program, pointer) {
+    program[program[pointer + 3]] = getParam(0, program, pointer) === getParam(1, program, pointer) ? 1 : 0;
+    return pointer + 4;
+}
+
+function intcodeComputer(program, userInput = [], userOutput = []) {
     let pointer = 0;
 
     while (program[pointer] != 99) {
@@ -53,7 +74,23 @@ function intcodeComputer(program, userInput = []) {
                 break;
             }
             case 4: {
-                pointer = readValue(program, pointer);
+                pointer = readValue(program, pointer, userOutput);
+                break;
+            }
+            case 5: {
+                pointer = jumpIfTrue(program, pointer);
+                break;
+            }
+            case 6: {
+                ponter = jumpIfFalse(program, pointer);
+                break;
+            }
+            case 7: {
+                pointer = lessThan(program, pointer);
+                break;
+            }
+            case 8: {
+                pointer = equals(program, pointer);
                 break;
             }
             default:
