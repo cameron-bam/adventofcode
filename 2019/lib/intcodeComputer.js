@@ -82,7 +82,7 @@ function intcodeComputer(program, userInput = [], userOutput = []) {
                 break;
             }
             case 6: {
-                ponter = jumpIfFalse(program, pointer);
+                pointer = jumpIfFalse(program, pointer);
                 break;
             }
             case 7: {
@@ -100,11 +100,11 @@ function intcodeComputer(program, userInput = [], userOutput = []) {
     }
 }
 
-function runProgram(program, noun, verb, userInput = []) {
+function runProgram(program, noun, verb, userInput = [], ouput = []) {
     const programCopy = program.slice(0);
-    programCopy[1] = noun;
-    programCopy[2] = verb;
-    intcodeComputer(programCopy, userInput);
+    noun != undefined && (programCopy[1] = noun);
+    verb != undefined && (programCopy[2] = verb);
+    intcodeComputer(programCopy, userInput, ouput);
 
     return programCopy[0]
 }
