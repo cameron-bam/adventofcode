@@ -1,4 +1,4 @@
-const {intcodeComputer, runProgram} = require("../lib/intcodeComputer");
+const {runProgram} = require("../lib/intcodeComputer");
 const assert = require("assert");
 
 const program1 = [3,9,8,9,10,9,4,9,99,-1,8];
