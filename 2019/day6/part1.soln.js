@@ -1,3 +1,5 @@
+const readInput = require('../../common/readInput');
+
 function findObject(condition, tree) {
     for (let i = 0; i < tree.orbits.length; i += 1) {
         if (condition(tree.orbits[i])) return tree.orbits[i];
@@ -57,9 +59,22 @@ function buildTree(orbits) {
 
     const ROOT = {orbits: [COM]};
 
-    orbits.map(({targetNode, newNode}) => {
-        addOrbit(targetNode, newNode, ROOT);
-    });
+    let size = orbits.length;
+
+    while (size > 0) {
+        orbits = orbits.filter(({targetNode, newNode}) => {
+            try {
+                addOrbit(targetNode, newNode, ROOT);
+                return false;
+            } catch (e) {
+                return true;
+            }
+        });
+
+        if (orbits.length === size) throw new Error(`Couldn't build orbit tree! No link between COM and remaining nodes!`);
+        
+        size = orbits.length;
+    }
 
     return ROOT;
 }
@@ -84,7 +99,11 @@ function buildOrbits(orbitMap) {
 }
 
 function solve() {
-    return Promise.resolve(true);
+    return readInput(__dirname + "/../input/day6/input")
+    .then(buildOrbits)
+    .then((orbits) => {
+        console.log(`Day 6, part 1: The total number of direct and indirect orbits is ${countOrbits(orbits)}`);
+    });
 }
 
 module.exports = { solve, buildOrbits, countOrbits };
