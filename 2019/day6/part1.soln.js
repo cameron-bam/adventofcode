@@ -106,4 +106,4 @@ function solve() {
     });
 }
 
-module.exports = { solve, buildOrbits, countOrbits };
+module.exports = { solve, buildOrbits, countOrbits, findObject };
