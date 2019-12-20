@@ -1,5 +1,9 @@
 const readInput = require("../../common/readInput");
 
+const UNKNOWN_INSTRUCTION = "UNKNOWN_CODE";
+const USER_INPUT_INTERRUPT = "USER_INPUT_INTERRUPT";
+const OK = "OK";
+
 function getParam(paramIndex, program, pointer) {
     const opcode = program[pointer];
     const bit = Math.pow(2, paramIndex);
@@ -30,6 +34,7 @@ function readValue(program, pointer, userOutput) {
 }
 
 function storeInput(program, pointer, userInput) {
+    if (userInput.length === 0) throw new Error("User input expected!");
     program[program[pointer + 1]] = userInput.shift();
     return pointer + 2;
 }
@@ -56,9 +61,7 @@ function equals(program, pointer) {
     return pointer + 4;
 }
 
-function intcodeComputer(program, userInput = [], userOutput = []) {
-    let pointer = 0;
-
+function intcodeComputer(program, userInput = [], userOutput = [], pointer = 0) {
     while (program[pointer] != 99) {
         switch(program[pointer] % 100) {
             case 1: {
@@ -70,7 +73,11 @@ function intcodeComputer(program, userInput = [], userOutput = []) {
                 break;
             }
             case 3: {
-                pointer = storeInput(program, pointer, userInput);
+                try {
+                    pointer = storeInput(program, pointer, userInput);
+                } catch (e) {
+                    return {exitCode: USER_INPUT_INTERRUPT, pointer};
+                }
                 break;
             }
             case 4: {
@@ -95,16 +102,31 @@ function intcodeComputer(program, userInput = [], userOutput = []) {
             }
             default:
                 console.log(`Encountered unknown code ${program[pointer]} at position ${pointer}`);
-                return;
+                return {exitCode: UNKNOWN_INSTRUCTION, pointer};
         }
     }
+
+    return {exitCode: OK, pointer};
+}
+
+function runProgramAsyncInput(program, userInput = [], output = [], pointer = 0) {
+    const programCopy = program.slice(0);
+
+    const {exitCode, pointer: lastPointer} = intcodeComputer(programCopy, userInput, output, pointer);
+
+    if (exitCode === USER_INPUT_INTERRUPT) return (nextUserInput = [], nextOutput = []) => runProgramAsyncInput(programCopy, nextUserInput, nextOutput, lastPointer);
+
+    return exitCode;
 }
 
 function runProgram(program, noun, verb, userInput = [], ouput = []) {
     const programCopy = program.slice(0);
     noun != undefined && (programCopy[1] = noun);
     verb != undefined && (programCopy[2] = verb);
-    intcodeComputer(programCopy, userInput, ouput);
+
+    const {exitCode} = intcodeComputer(programCopy, userInput, ouput);
+
+    if (exitCode != OK) throw new Error(`RunProgram failed! Cause: ${exitCode}`);
 
     return programCopy[0]
 }
@@ -120,4 +142,4 @@ function readProgramFromFile(fileName) {
     })
 }
 
-module.exports = {intcodeComputer, runProgram, readProgramFromFile}
+module.exports = {intcodeComputer, runProgram, readProgramFromFile, runProgramAsyncInput, exitCodes: {OK, USER_INPUT_INTERRUPT, UNKNOWN_INSTRUCTION}};
