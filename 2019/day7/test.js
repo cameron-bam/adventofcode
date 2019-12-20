@@ -1,6 +1,6 @@
 const assert = require('assert');
 const {findThrusterSignal, findMaxAmpSettings} = require('./part1.soln');
-const {findThrusterSignalFeedback} = require("./part2.soln");
+const {findThrusterSignalFeedback, findMaxAmpSettingsFeedback} = require("./part2.soln");
 
 const testCasesPart1 = [
     {
@@ -58,6 +58,13 @@ describe("Day 7, part 2: Maximize thruster signal with feedback", () => {
         it(`Should find the thruster value ${maxValue} for [${maxSequence}]`, () => {
             const output = findThrusterSignalFeedback(program, maxSequence);
             assert.equal(output, maxValue, `Expected return value to be ${maxValue}!`);
+        });
+
+        it(`Should find the max amp setting is [${maxSequence}]`, () => {
+            const {maxSettings, maxThrust} = findMaxAmpSettingsFeedback(program);
+
+            assert.equal(maxThrust, maxValue, `Expected maxThrust to be equal to ${maxValue}`);
+            assert.deepEqual(maxSettings, maxSequence, `Expected output to be equal to [${maxSequence}]!`);
         });
     });
 });

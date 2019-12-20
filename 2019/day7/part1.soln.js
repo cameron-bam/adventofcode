@@ -52,4 +52,4 @@ function solve() {
     });
 }
 
-module.exports = {solve, findThrusterSignal, findMaxAmpSettings};
+module.exports = {solve, findThrusterSignal, findMaxAmpSettings, permut};
