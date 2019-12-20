@@ -12,23 +12,28 @@ function findThrusterSignal(program, ampSettings) {
     }, 0);
 }
 
-function getAmpSettings(integer, numAmps) {
-    if (typeof integer != 'number') throw new Error('Amp settings must be an integer!');
-    let base5 = integer.toString(5);
-    const startingLength = base5.length
-
-    for (let i = 0; i < numAmps - startingLength; i += 1) {
-        base5 = `0${base5}`;
+function permut(string) {
+    if (string.length < 2) return string;
+  
+    let permutations = [];
+    for (let i = 0; i < string.length; i++) {
+        const char = string[i];
+  
+        // skip duplicate characters in the string.
+        if (string.indexOf(char) != i) continue;
+  
+        const remainingString = string.slice(0, i) + string.slice(i + 1, string.length);
+  
+        for (let subPermutation of permut(remainingString)) permutations.push(char + subPermutation)
     }
-
-    return base5.split("").map((setting) => parseInt(setting));
+    return permutations;
 }
 
-function findMaxAmpSettings(program, numAmps) {
+function findMaxAmpSettings(program) {
     let maxThrust, maxSettings;
 
-    for (let i = 0; i < Math.pow(5, numAmps); i += 1) {
-        const ampSettings = getAmpSettings(i, numAmps);
+    for (let ampSettings of permut("43210")) {
+        ampSettings = ampSettings.split("").map((setting) => parseInt(setting));
         const thrusterValue = findThrusterSignal(program, ampSettings);
         if (thrusterValue > maxThrust || !maxSettings) {
             maxSettings = ampSettings;
@@ -42,8 +47,8 @@ function findMaxAmpSettings(program, numAmps) {
 function solve() {
     return readProgramFromFile(__dirname + "/../input/day7/input")
     .then((program) => {
-        const output = [];
-        runProgram(program, undefined, undefined, [2], output);
+        const {maxSettings, maxThrust} = findMaxAmpSettings(program);
+        console.log(`Day 7, part 1: The maximum thrust value is ${maxThrust}, which is provided by the amp settings [${maxSettings}]`);
     });
 }
 

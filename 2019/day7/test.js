@@ -25,7 +25,7 @@ describe("Day 7, part 1: Maximize thruster signal with amplifier settings", () =
         });
 
         it(`Should find the max amp setting is [${maxSequence}]`, () => {
-            const {maxSettings, maxThrust} = findMaxAmpSettings(program, 5);
+            const {maxSettings, maxThrust} = findMaxAmpSettings(program);
 
             assert.equal(maxThrust, maxValue, `Expected maxThrust to be equal to ${maxValue}`)
             assert.deepEqual(maxSettings, maxSequence, `Expected output to be equal to [${maxSequence}]!`);
