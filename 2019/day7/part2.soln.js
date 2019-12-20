@@ -53,7 +53,11 @@ function findMaxAmpSettingsFeedback(program) {
 }
 
 function solve() {
-    return Promise.resolve(true);
+    return readProgramFromFile(__dirname + "/../input/day7/input")
+    .then((program) => {
+        const {maxSettings, maxThrust} = findMaxAmpSettingsFeedback(program);
+        console.log(`Day 7, part 2: max thrust with feedback is ${maxThrust}, provided by settings [${maxSettings}]`);
+    })
 }
 
 module.exports = {solve, findThrusterSignalFeedback, findMaxAmpSettingsFeedback};
