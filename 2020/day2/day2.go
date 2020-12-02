@@ -79,6 +79,7 @@ func partTwo() {
 	fmt.Printf("Day 2 Solution, part II: %d\n", count)
 }
 
+// Solve prints the solution for https://adventofcode.com/2020/day/2
 func Solve() {
 	partOne()
 	partTwo()

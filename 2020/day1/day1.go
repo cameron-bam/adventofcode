@@ -54,6 +54,7 @@ func readInput() []int {
 	return vals
 }
 
+// Solve prints the solution for https://adventofcode.com/2020/day/1
 func Solve() {
 	fmt.Printf("Day 1 Solution, part I: %d\n", findProduct(readInput(), 2020))
 	fmt.Printf("Day 1 Solution, part II: %d\n", findTripleProduct(readInput(), 2020))
