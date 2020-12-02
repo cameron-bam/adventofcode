@@ -1,5 +1,5 @@
 const {buildOrbits, findObject} = require("./part1.soln");
-const readInput = require("../../common/readInput");
+const readInput = require("../common/readInput");
 
 function markPath(object, jumps = 0) {
     if (!!object.jumps) return jumps + object.jumps;    

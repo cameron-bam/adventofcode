@@ -1,4 +1,4 @@
-const readInput = require("../../common/readInput");
+const readInput = require("../common/readInput");
 const {findIntersections} = require("./plot");
 const parsePaths = require("./parsePaths");
 

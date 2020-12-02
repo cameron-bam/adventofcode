@@ -1,4 +1,4 @@
-const readInput = require('../../common/readInput');
+const readInput = require('../common/readInput');
 
 function findObject(condition, tree) {
     for (let i = 0; i < tree.orbits.length; i += 1) {

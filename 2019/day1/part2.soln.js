@@ -1,5 +1,5 @@
 const {computeTotalMass, logError, processInput} = require("./lib");
-const readInput = require("../../common/readInput");
+const readInput = require("../common/readInput");
 
 function getFuelFromMassAndFuel(mass) {
     const fuel = Math.floor(mass / 3) - 2;;

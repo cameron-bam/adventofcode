@@ -1,4 +1,4 @@
-const readInput = require("../../common/readInput");
+const readInput = require("../common/readInput");
 
 const UNKNOWN_INSTRUCTION = "UNKNOWN_CODE";
 const USER_INPUT_INTERRUPT = "USER_INPUT_INTERRUPT";
