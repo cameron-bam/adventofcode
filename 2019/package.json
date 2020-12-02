@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "mocha 20*/**/test.js",
+    "test": "mocha **/test.js",
     "debug-test": "yarn test --inspect-brk",
     "solve": "node index.js"
   },
