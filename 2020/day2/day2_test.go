@@ -8,15 +8,15 @@ type TestCase struct {
 }
 
 var testInput = []TestCase{
-	TestCase{`1-3 a: abcde`, true},
-	TestCase{`1-3 b: cdefg`, false},
-	TestCase{`2-9 c: ccccccccc`, true},
+	{`1-3 a: abcde`, true},
+	{`1-3 b: cdefg`, false},
+	{`2-9 c: ccccccccc`, true},
 }
 
 var testInputTwo = []TestCase{
-	TestCase{`1-3 a: abcde`, true},
-	TestCase{`1-3 b: cdefg`, false},
-	TestCase{`2-9 c: ccccccccc`, false},
+	{`1-3 a: abcde`, true},
+	{`1-3 b: cdefg`, false},
+	{`2-9 c: ccccccccc`, false},
 }
 
 func TestTestPassword(t *testing.T) {
