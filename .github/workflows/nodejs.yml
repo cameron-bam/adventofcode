@@ -3,7 +3,7 @@ name: Node CI
 on: [push]
 
 jobs:
-  build:
+  build_2019:
 
     runs-on: ubuntu-latest
 
