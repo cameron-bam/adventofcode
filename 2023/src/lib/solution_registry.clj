@@ -6,16 +6,23 @@
 
 (defmacro def-solution
   [& body]
-  (let [solutions (map (fn [solution] 
-                         `(time
-                           (prn *ns* (quote ~solution) ~solution))) body)]
+  (let [solutions `(let [start-ns# (. *ns* -name)]
+                     (in-ns (. ~*ns* -name))
+                     (eval '(do
+                              ~@(map (fn [solution]
+                                        `(time
+                                          (prn *ns* (quote ~solution) ~solution))) body)))
+                     (in-ns start-ns#))]
     `(do
+       (swap! registry conj (quote ~solutions))
        (when eval-on-def
-         (map eval (quote ~solutions)))
-       (swap! registry conj (quote ~solutions)))))
+         (eval ~solutions)))))
+
+(defn eval-solution [soln]
+  (eval soln))
 
 (defn run-solutions []
-  (run! #(run! eval %) @registry))
+  (run! eval-solution @registry))
 
 (defn clear-registry []
   (reset! registry []))

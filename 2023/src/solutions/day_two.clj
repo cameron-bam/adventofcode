@@ -54,5 +54,5 @@
        (solve part)))
 
 (def-solution
-  (day-two/-main "./input/day_two.txt" :part-one)
-  (day-two/-main "./input/day_two.txt" :part-two))
+  (-main "./input/day_two.txt" :part-one)
+  (-main "./input/day_two.txt" :part-two))

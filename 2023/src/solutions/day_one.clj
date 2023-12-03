@@ -71,5 +71,5 @@
        (reduce +)))
 
 (def-solution
-  (day-one/solve "./input/day_one.txt" :part-one)
-  (day-one/solve "./input/day_one.txt" :part-two))
+  (solve "./input/day_one.txt" :part-one)
+  (solve "./input/day_one.txt" :part-two))
