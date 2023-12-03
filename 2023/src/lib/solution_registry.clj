@@ -1,4 +1,4 @@
-(ns lib.solution_registry)
+(ns lib.solution-registry)
 
 (def registry (atom []))
 

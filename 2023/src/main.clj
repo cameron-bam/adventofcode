@@ -1,6 +1,6 @@
 (ns main
   (:require [lib.load-files :refer [load-files]]
-            [lib.solution_registry :refer [run-solutions clear-registry]]))
+            [lib.solution-registry :refer [run-solutions clear-registry]]))
 
 (defn -main [& _]
   (clear-registry)

@@ -1,6 +1,6 @@
 (ns day-two
   (:require [clojure.string :as str]
-            [lib.solution_registry :refer [def-solution]]))
+            [lib.solution-registry :refer [def-solution]]))
 
 (defn parse-game [game-str]
   (let [[game-id result] (str/split game-str #":")

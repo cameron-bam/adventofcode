@@ -1,6 +1,6 @@
 (ns day-one
   (:require [clojure.string :as str]
-            [lib.solution_registry :refer [def-solution]]))
+            [lib.solution-registry :refer [def-solution]]))
 
 (defmulti make-num-resolver identity)
 (defmulti num-resolver (fn [part _] part))
