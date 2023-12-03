@@ -1,5 +1,6 @@
 (ns day-one
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [lib.solution_registry :refer [def-solution]]))
 
 (defmulti make-num-resolver identity)
 (defmulti num-resolver (fn [part _] part))
@@ -63,13 +64,12 @@
           (recur chars (if (nil? first) num first) num)
           (recur chars first last))))))
 
-(defn -main [input part & _]
+(defn solve [input part & _]
   (->> (slurp input)
        (str/split-lines)
        (map #(line->number (make-num-resolver part) %))
        (reduce +)))
 
-(comment
-  (-main "./input/day_one.txt" :part-one)
-  (-main "./input/day_one.txt" :part-two)
-  )
+(def-solution
+  (day-one/solve "./input/day_one.txt" :part-one)
+  (day-one/solve "./input/day_one.txt" :part-two))
