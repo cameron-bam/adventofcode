@@ -70,35 +70,44 @@
          [seed-start seed-len] seed-range
          shift #(+ % (- dest map-start))
          map-end (+ map-start map-len)
-         seed-end (+ seed-start seed-len)]
-     (case (compare-range seed-range map-range)
-                            ;; no transforms
-       (3 12) [seed-range]
-                            ;; seed range less than map range but overlaps
-       5 [[seed-start (- map-start seed-start)]
-          [(shift map-start) (- seed-end map-start)]]
-                            ;; seed range encompasses the map range
-       6 [[seed-start (- map-start seed-start)]
-          [(shift map-start) map-len]
-          [map-end (- seed-end map-end)]]
-                            ;; map range encompases seed range
-       9 [[(shift seed-start) seed-len]]
-                            ;; map range less than seed range but overlaps
-       10 [[(shift seed-start) (- map-end seed-start)]
-           [map-end (- seed-end map-end)]]))))
+         seed-end (+ seed-start seed-len)
+         compare-range-result (compare-range seed-range map-range)]
+     (case compare-range-result
+       (3 12) {:unmapped [seed-range]}  ;; no transforms 
+       5 {:mapped [[(shift map-start) (- seed-end map-start)]]
+          :unmapped [[seed-start (- map-start seed-start)]]}  ;; seed range less than map range but overlaps
+       6 {:mapped [[(shift map-start) map-len]]
+          :unmapped [[seed-start (- map-start seed-start)]
+                     [map-end (- seed-end map-end)]]} ;; seed range encompasses the map range 
+       9 {:mapped [[(shift seed-start) seed-len]]} ;; map range encompases seed range 
+       10 {:mapped [[(shift seed-start) (- map-end seed-start)]]
+           :unmapped [[map-end (- seed-end map-end)]]} ;; map range less than seed range but overlaps
+       ))))
+
+(defn apply-shift-intervals [shift-intervals seed-range]
+  (->> shift-intervals
+       (reduce (fn [acc shift-interval]
+                 (->> (map (partial split-seed-range shift-interval) (:unmapped acc))
+                      (reduce (fn [acc {:keys [unmapped mapped] :or {unmapped [] mapped []}}]
+                                (-> acc
+                                    (update :unmapped concat unmapped)
+                                    (update :mapped concat mapped)))
+                              {:unmapped []
+                               :mapped (:mapped acc)})))
+               {:unmapped [seed-range]})
+       vals
+       (apply concat)))
 
 (defmethod solve :part-two [_ shift-interval-map-vals seeds]
   (->> (partition 2 seeds)
        (mapcat (fn [seed-range]
-              (reduce
-               (fn [seed-ranges shift-intervals]
                  (reduce
-                  (fn [seed-ranges shift-interval]
-                    (mapcat (partial split-seed-range shift-interval) seed-ranges))
-                  seed-ranges
-                  shift-intervals))
-               [seed-range]
-               shift-interval-map-vals)))
+                  (fn [seed-ranges shift-intervals]
+                    (mapcat
+                     (partial apply-shift-intervals shift-intervals)
+                     seed-ranges))
+                  [seed-range]
+                  shift-interval-map-vals)))
        (map first)
        (reduce min Long/MAX_VALUE)))
 
