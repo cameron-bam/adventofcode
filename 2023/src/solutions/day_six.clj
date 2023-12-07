@@ -26,16 +26,23 @@
 
 (defmethod solve :part-one [_ races]
   (->> races
+       (apply map vector)
        (map ways-to-win)
        (reduce * 1)))
+
+(defmethod solve :part-two [_ race]
+  (ways-to-win (->> race
+                    (map (comp
+                          #(Long/parseLong % 10)
+                          #(reduce str "" %))))))
 
 (defn -main [filename part & _]
   (->> (slurp filename)
        (str/split-lines)
        (map #(% %2) [(partial parse-line "time:")
                      (partial parse-line "distances:")])
-       (apply map vector)
        (solve part)))
 
 (def-solution
-  (-main "./input/day_six.txt" :part-one))
+  (-main "./input/day_six.txt" :part-one)
+  (-main "./input/day_six.txt" :part-two))
