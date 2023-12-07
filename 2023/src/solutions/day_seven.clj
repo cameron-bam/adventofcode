@@ -22,11 +22,29 @@
                     1 3}
                    {1 5}]))
 
-(def card-ranks (vec->ix-lookup ["A" "K" "Q" "J" "T" "9" "8" "7" "6" "5" "4" "3" "2" "1"]))
+(def card-ranks (vec->ix-lookup ["A" "K" "Q" "J" "T" "9" "8" "7" "6" "5" "4" "3" "2" "J"]))
 
 (defn hand->rank [hand]
   (let [hand-class (->> (clojure.string/split hand #"")
                         (group-by identity)
+                        vals
+                        (group-by count)
+                        (map (fn [[k v]]
+                               (vector k (count v))))
+                        (into {}))]
+    (get hand-ranks hand-class)))
+
+(defn joker-hand->rank [hand]
+  (let [hand-groups (->> (clojure.string/split hand #"")
+                         (group-by identity))
+        jokers (-> hand-groups (get "J"))
+        hand-groups (dissoc hand-groups "J")
+        max-suit (->> hand-groups
+                      (sort-by (comp count second))
+                      (reverse)
+                      ffirst)
+        hand-groups (update hand-groups max-suit concat jokers)
+        hand-class (->> hand-groups
                         vals
                         (group-by count)
                         (map (fn [[k v]]
@@ -56,6 +74,19 @@
                       (* (+ 1 ix) bid)))
        (reduce + 0)))
 
+(defmethod solve :part-two [_ hands]
+  (->> (sort (fn [{x :cards} {y :cards}]
+               (let [res (compare-with joker-hand->rank y x)]
+                 (if (not= 0 res)
+                   res
+                   (compare-with #(->> (str/split % #"")
+                                       (map (fn [card]
+                                              (get card-ranks card)))
+                                       (apply vector)) y x)))) hands)
+       (map-indexed (fn [ix {:keys [bid]}]
+                      (* (+ 1 ix) bid)))
+       (reduce + 0)))
+
 (defn -main [file part & _] 
   (->> (slurp file)
        (str/split-lines)
@@ -67,4 +98,5 @@
        (solve part)))
 
 (def-solution
-  (-main "./input/day_seven.txt" :part-one))
+  (-main "./input/day_seven.txt" :part-one)
+  (-main "./input/day_seven.txt" :part-two))
