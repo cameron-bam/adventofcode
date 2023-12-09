@@ -83,13 +83,14 @@
            graph graph
            step 1]
       (if (empty? nodes)
-        {:start (map (comp (partial get graph) :id) start)
-         :cycle-start (->> start 
-                           (map (comp :distance (partial get graph) :id))
-                           (apply lcm)
-                           (* (count instructions)))
-         :end (map (comp (partial get graph) :id) end)
-         :instructions (count instructions)}
+        ;; Solution is problem set specific. We exploit the following about the graph
+        ;; - no asymmetric cycles are present (meaning we don't travel from one XXZ node to another and back)
+        ;; - by inspecting the start nodes, we know they are one away from the beginning of each XXZ cycle. This allows
+        ;;   us to use the distance from each start node in our LCM calculation
+        (->> start
+             (map (comp :distance (partial get graph) :id))
+             (apply lcm)
+             (* (count instructions)))
         (recur (traverse-many graph :previous (filter (comp not :distance) nodes))
                (reduce (fn [new-graph {:keys [id] :as node}]
                          (if (:distance node)
