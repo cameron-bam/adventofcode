@@ -45,4 +45,4 @@
 
 (def-solution
   (-main "./input/day_six.txt" :part-one)
-  (-main "./input/day_six.txt" :part-two))
+  #_(-main "./input/day_six.txt" :part-two))
