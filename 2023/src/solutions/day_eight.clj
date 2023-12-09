@@ -1,6 +1,5 @@
 (ns day-eight
   (:require [clojure.string :as str]
-            [clojure.math :refer [pow]]
             [lib.solution-registry :refer [def-solution]]))
 
 
@@ -24,22 +23,15 @@
 (defmulti solve #'dispatch)
 
 (defn find-matches [{:keys [graph instructions]} start pred]
-  (let [start-nodes (atom #{start})]
-    (loop [node start
-           [instruction & rem-instructions] instructions
-           matches []
-           steps 0]
-      (if (nil? instruction)
-        {:matches matches
-         :next (:id node)}
-        (let [next-node (get graph (get node instruction))]
-          (when-not next-node
-            (throw (ex-info "Could not find next node!" {:node node :instruction instruction :steps steps})))
-          (when (nil? rem-instructions)
-            (when (@start-nodes next-node)
-              (throw (ex-info "Cycle detected!" {:node next-node :steps steps})))
-            (swap! start-nodes conj next-node))
-          (recur next-node rem-instructions (if (pred node) (conj matches steps) matches) (inc steps)))))))
+  (loop [node start
+         [instruction & rem-instructions] instructions
+         matches []
+         steps 0]
+    (if (nil? instruction)
+      {:matches matches
+       :next (:id node)}
+      (let [next-node (get graph (get node instruction))]
+        (recur next-node rem-instructions (if (pred node) (conj matches {:node node :steps steps}) matches) (inc steps))))))
 
 (defn gcd
   ([a b]
@@ -49,61 +41,66 @@
   ([a b & more]
    (apply gcd (gcd a b) more)))
 
+(defn lcm
+  ([a b]
+   (*' (/ a (gcd a b)) b))
+  ([a b & more]
+   (apply *' (/ a (apply gcd a b more)) b more)))
+
 (defmethod solve :part-one
   [_ {:keys [graph instructions] :as input}]
   (loop [cur-node (get graph "AAA")
          steps 0]
     (let [{:keys [matches next]} (find-matches input cur-node (partial = (get graph "ZZZ")))]
       (if (seq matches)
-        (do 
-          (prn "found match" matches cur-node)
-          (+ (first matches) steps))
+        (+ (-> matches first :steps) steps)
         (recur (get graph next) (+ (count instructions) steps))))))
 
 (defmethod solve :part-two
   [_ {:keys [graph nodes instructions] :as input}]
-  (let [start (filter (comp #(str/ends-with? % "A") :id) nodes)
-        end (into #{} (filter (comp #(str/ends-with? % "Z") :id) nodes))
+  (let [id-ends-with #(comp (fn [id] (str/ends-with? id %)) :id)
+        start (filter (id-ends-with "A") nodes)
+        end (into #{} (filter (id-ends-with "Z") nodes))
         traverse (fn traverse [g d {:keys [id]}]
                    (let [graph-get (partial get g)]
                      (->> (get (graph-get id) d)
                           (map graph-get))))
+        traverse-many (fn [g d nodes]
+                        (->> (mapcat (partial traverse g d) nodes)
+                             (filter some?)))
         graph (reduce
                (fn [new-graph {:keys [id] :as node}]
                  (let [{:keys [next matches]} (find-matches input node end)]
                    (-> new-graph
-                       (update id merge node {:next [next]} (when (seq matches) {:distance (first matches)}))
+                       (update id merge node {:next [next]} (when (seq matches) {:distance (-> matches first :steps)
+                                                                                 :match (-> matches first :node :id)}))
                        (update-in [next :previous] conj id))))
                graph (vals graph))]
     (loop [nodes (->> graph
                       vals
                       (filter :distance)
-                      (map (partial traverse graph :previous))
-                      (flatten)
-                      (filter some?))
+                      (traverse-many graph :previous))
            graph graph
            step 1]
       (if (empty? nodes)
-        (let [distances (->> end
-                             (map (comp
-                                   (partial traverse graph :next)
-                                   (partial get graph) :id))
-                             (flatten)
-                             (map :distance))
-              denom (apply gcd distances)]
-          (prn denom distances)
-          (->> distances
-               (map #(/ % denom))
-               (apply *)
-               (* (count instructions))
-               (+ (count start))))
-        (recur (->> nodes
-                    (map (partial traverse graph :previous))
-                    flatten
-                    (filter some?)
-                    (filter (comp not :distance)))
-               (reduce (fn [new-graph {:keys [id]}]
-                         (assoc-in new-graph [id :distance] step))
+        {:start (map (comp (partial get graph) :id) start)
+         :cycle-start (->> start 
+                           (map (comp :distance (partial get graph) :id))
+                           (apply lcm)
+                           (* (count instructions)))
+         :end (map (comp (partial get graph) :id) end)
+         :instructions (count instructions)}
+        (recur (traverse-many graph :previous (filter (comp not :distance) nodes))
+               (reduce (fn [new-graph {:keys [id] :as node}]
+                         (if (:distance node)
+                           (let [next (first (traverse new-graph :next node))]
+                             (prn "Found cycle!" node next)
+                             (when-not (= (:match next) (:match node))
+                               (prn "Asymmetric cycle detected!" (:match next) (:match node)))
+                             new-graph)
+                           (-> new-graph
+                               (assoc-in [id :distance] step)
+                               (assoc-in [id :match] (->> node (traverse new-graph :next) (map :match) first)))))
                        graph nodes)
                (inc step))))))
 
@@ -112,4 +109,5 @@
 
 (def-solution
   (-main "./input/day_eight.txt" :part-one)
-  (-main "./input/day_eight.txt" :part-two))
+  (-main "./input/day_eight.txt" :part-two)
+  )
