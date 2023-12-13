@@ -17,10 +17,19 @@
   (let [directions [:north :east :south :west]]
     (get directions (mod (+ turns (.indexOf directions start)) 4))))
 
+(defn combine-keys [order & args]
+  (->> args
+       (sort-by #(.indexOf order %))
+       (map name)
+       (str/join "-")
+       (keyword)))
+
+(def dir-order [:north :south :east :west])
+
+(def ->dir-ix #(.indexOf dir-order %))
+
 (defn get-turns [start end]
-  (let [dir-order [:north :south :east :west]
-        ->ix #(.indexOf dir-order %)
-        diff (- (->ix end) (->ix start))
+  (let [diff (- (->dir-ix end) (->dir-ix start))
         diff (if (> diff 2) -1 diff)
         diff (if (< diff -2) 1 diff)]
     diff))
@@ -36,11 +45,23 @@
         north-west [(dec i) (dec j)]]
     (sym-map north south east west north-east north-west south-east south-west)))
 
+(def combine-directions (partial combine-keys [:north :south :east :west]))
+
+(def combine-relative-diretions (partial combine-keys [:forward :back :left :right]))
+
 (defn get-relative-directions [forward] 
-  {:forward forward
-   :back (start+turns->direction forward 2)
-   :left (start+turns->direction forward -1)
-   :right (start+turns->direction forward 1)})
+  (let [dirs {:forward forward
+              :back (start+turns->direction forward 2)
+              :left (start+turns->direction forward -1)
+              :right (start+turns->direction forward 1)}]
+    (merge dirs (->> (for [x [:forward :back]
+                           y [:left :right]]
+                       [x y])
+                     (mapcat (fn [keys]
+                               (vector (apply combine-relative-diretions keys)
+                                       (->> (map (partial get dirs) keys)
+                                            (apply combine-directions)))))
+                     (apply hash-map)))))
 
 (defn tile->node [i j tile]
   (let [directions (get-directions i j)
@@ -119,55 +140,57 @@
 
 
 (defn get-net-turns [{:keys [grid start] :as input}]
-  (loop [[[cur-id heading next-id] & path] (get-path grid start)
-         turns 0 
-         grid grid]
+  (loop [[[_ heading next-id] & path] (get-path grid start)
+         turns 0]
     (let [[_ next-heading] (first path)
-          directions (apply get-directions cur-id)
-          turns (+ turns (get-turns heading next-heading))
-          relative-nodes (->> (get-relative-directions heading)
-                              (mapcat #(let [[k v] %]
-                                         [k (get directions v)]))
-                              (apply hash-map))]
+          turns (+ turns (get-turns heading next-heading))]
       (if (= next-id start)
-        (assoc input :net-turns turns :grid (update grid cur-id merge relative-nodes))
-        (recur path
-               turns
-               (update grid cur-id merge relative-nodes))))))
+        (assoc input :net-turns turns)
+        (recur path turns)))))
 
 (defn get-neighborhood
-  ([grid node]
-   (get-neighborhood grid node #{node}))
-  ([grid node neighbors]
-   (let [new-neighbors (->> (apply get-directions node)
-                            vals
-                            (map (partial get grid))
-                            (filter (comp nil? :distance)) 
-                            (map :id)
-                            (filter (comp nil? neighbors))
-                            (filter some?))]
-     (reduce (fn [neighbors node]
-               (get-neighborhood grid node neighbors))
-             (into neighbors new-neighbors) 
-             new-neighbors))))
+  ([grid neighbors & nodes]
+   (loop [[id & nodes] nodes
+          neighbors neighbors]
+     (let [new-neighbor? (comp #(and (some? %)
+                                     (-> % :distance nil?)
+                                     (-> % :id neighbors nil?))
+                               (partial get grid))]
+       (if (nil? id)
+         neighbors
+         (if (new-neighbor? id)
+           (recur (concat nodes (->> (apply get-directions id) vals)) (conj neighbors id))
+           (recur nodes neighbors)))))))
+
+(defn get-left-right-nodes [id heading next-heading]
+  (let [directions (apply get-directions id)
+        {:keys [left right] :as relative-directions} (get-relative-directions heading)
+        relative-directions->nodes (partial map (comp (partial get directions)
+                                                      (partial get relative-directions)))]
+    (condp = next-heading
+      left {:left-nodes (relative-directions->nodes [:back-left])
+            :right-nodes (relative-directions->nodes [:forward-left :forward :forward-right :right :back-right])}
+      right {:left-nodes (relative-directions->nodes [:back-left :left :forward-left :forward :forward-right])
+             :right-nodes (relative-directions->nodes [:back-right])}
+      heading {:left-nodes (relative-directions->nodes [:back-left :left :forward-left])
+               :right-nodes (relative-directions->nodes [:back-right :right :forward-right])})))
 
 (defn collect-inside-nodes [{:keys [grid start net-turns] :as input}]
-  (loop [[{:keys [id left right]} & path] (->> start
-                                               (get-path grid)
-                                               (map (comp (partial get grid) #(nth % 2))))
+  (loop [[[cur-id heading] & path] (->> start
+                                                (get-path grid))
+         is-first true
          inside-nodes #{}
          outside-nodes #{}]
-    (if (or (nil? id) (= id start))
+    (if (and (not is-first) (= cur-id start))
       (assoc input :inside-nodes inside-nodes :outside-nodes outside-nodes)
-      (let [inside-node (if (> net-turns 0) right left)
-            outside-node (if (> net-turns 0) left right)]
-        (recur path 
-               (if (or (inside-nodes inside-node) (:distance (get grid inside-node)))
-                 inside-nodes
-                 (get-neighborhood grid inside-node inside-nodes))
-               (if (or (outside-nodes outside-node) (:distance (get grid outside-node)))
-                 outside-nodes
-                 (get-neighborhood grid outside-node outside-nodes)))))))
+      (let [[_ next-heading] (first path)
+            {:keys [left-nodes right-nodes]} (get-left-right-nodes cur-id heading next-heading)
+            new-inside-nodes (if (> net-turns 0) right-nodes left-nodes)
+            new-outside-nodes (if (> net-turns 0) left-nodes right-nodes)]
+        (recur path
+               false
+               (apply get-neighborhood grid inside-nodes new-inside-nodes)
+               (apply get-neighborhood grid outside-nodes new-outside-nodes))))))
 
 (defn get-max-distance [{:keys [grid]}]
   (->> grid vals (map :distance) (apply safe-max)))
@@ -189,7 +212,7 @@
     @string-acc))
 
 (defn print-map [input]
-  (prn (dissoc input :grid :inside-nodes))
+  (prn (dissoc input :grid :inside-nodes :outside-nodes))
   (->> input
        pipe-map->str
        (str/split-lines)
@@ -203,48 +226,8 @@
        get-net-turns
        ((if (= part :part-one)
           get-max-distance
-          (comp #(spit "./output/day_ten.txt" %) pipe-map->str collect-inside-nodes)))))
+          (comp count :inside-nodes collect-inside-nodes)))))
 
 (def-solution
   (main "./input/day_ten.txt" :part-one)
   (main "./input/day_ten.txt" :part-two))
-
-(def sample
-  #_"...........
-.S-------7.
-.|F-----7|.
-.||.....||.
-.||.....||.
-.|L-7.F-J|.
-.|..|.|..|.
-.L--J.L--J.
-..........."
-  ".F----7F7F7F7F-7....
-.|F--7||||||||FJ....
-.||.FJ||||||||L7....
-FJL7L7LJLJ||LJ.L-7..
-L--J.L7...LJS7F-7L7.
-....F-J..F7FJ|L7L7L7
-....L7.F7||L7|.L7L7|
-.....|FJLJ|FJ|F7|.LJ
-....FJL-7.||.||||...
-....L---J.LJ.LJLJ..."
-  #_"FF7FSF7F7F7F7F7F---7
-L|LJ||||||||||||F--J
-FL-7LJLJ||||||LJL-77
-F--JF--7||LJLJ7F7FJ-
-L---JF-JLJ.||-FJLJJ7
-|F|F-JF---7F7-L7L|7|
-|FFJF7L7F-JF7|JL---7
-7-L-JL7||F7|L7F-7F7|
-L.L7LFJ|||||FJL7||LJ
-L7JLJL-JLJLJL--JLJ.L")
-
-(->> sample
-     parse-input
-     add-distances
-     get-net-turns
-     collect-inside-nodes
-     #_:inside-nodes
-     #_count
-     print-map)
