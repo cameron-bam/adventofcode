@@ -48,14 +48,14 @@
         [i (inc j)]]
        (filter (partial contains? grid))))
 
-(defn dijkstras [{:keys [grid empty-rows empty-cols]} start]
+(defn dijkstras [{:keys [grid empty-rows empty-cols]} expanding-factor start]
   (let [get-increment #(let [[row col] %1
                              [row_i col_i] %2]
                          (if (or
                               (and (not= row row_i)
                                    (empty-rows row_i))
                               (and (not= col col_i)
-                                   (empty-cols col_i))) 2 1))]
+                                   (empty-cols col_i))) expanding-factor 1))]
     (loop [visited {start 0}
            [{:keys [id distance] :as node} & nodes] (->> (get-neighbors grid start)
                                                          (map #(hash-map :id % :distance (get-increment start %))))]
@@ -69,9 +69,9 @@
                  (concat nodes next-nodes)))))))
 
 
-(defn compute-shortest-paths [{:keys [galaxies] :as input}]
+(defn compute-shortest-paths [expanding-factor {:keys [galaxies] :as input}]
   (assoc input :dijkstras (->> galaxies
-                               (mapcat #(vector % (dijkstras input %)))
+                               (mapcat #(vector % (dijkstras input expanding-factor %)))
                                (apply hash-map))))
 
 (defn sum-shortest-paths [{:keys [dijkstras galaxy-pairs]}]
@@ -79,7 +79,7 @@
        (reduce + 0)))
 
 
-(defn parse-input [s]
+(defn parse-input [s expanding-factor]
   (->> s
        (str/split-lines)
        (map #(str/split % #""))
@@ -87,8 +87,9 @@
        get-expanded-space
        get-galaxies
        get-galaxy-pairs 
-       compute-shortest-paths
+       (compute-shortest-paths expanding-factor)
        sum-shortest-paths))
 
 (def-solution
-  (parse-input (slurp "./input/day_eleven.txt")))
+  (parse-input (slurp "./input/day_eleven.txt") 2)
+  (parse-input (slurp "./input/day_eleven.txt") 1000000))
