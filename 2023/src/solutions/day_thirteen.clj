@@ -1,16 +1,28 @@
 (ns day-thirteen
   (:require [clojure.string :as str]
             [lib.solution-registry :refer [def-solution]]
+            [lib.spies :refer [spy->>]]
             [clojure.math :refer [floor ceil]]))
 
-(defn test-for-palindrome [line start end]
-  (let [->c (partial nth line)]
+(defn rows-match [smudge-tolerance a b]
+  (let [mismatches (->> [a b]
+                        (apply map vector)
+                        (reduce (fn [acc [a' b']]
+                                  (if (= a' b')
+                                    acc
+                                    (inc acc))) 0))]
+    (>= smudge-tolerance mismatches)))
+
+(defn test-for-palindrome [smudge-tolerance grid start end]
+  (let [->row (partial nth grid)]
     (loop [start start
            end end]
       (cond
         (< end start) true
-        (not= (->c start)
-              (->c end)) false
+        (->> [start end]
+                (map ->row)
+                (apply rows-match smudge-tolerance)
+                not) false
         :else (recur (inc start) (dec end))))))
 
 (defn columns-to-the-left [[start end]]
@@ -29,7 +41,9 @@
     (- (inc end) start)
     0))
 
-(defn find-possible-palindromes [g]
+;; need to check for rows smudge matching (every bit of the row matches except for one piece)
+;; when validating palindrome, smudge matching is allowed only once
+(defn find-possible-palindromes [smudge-tolerance g]
   (let [start 0 end (-> g count dec)]
     (loop [cur-start start cur-end end found #{}]
       (if (or (= cur-end start) (= cur-start end))
@@ -37,13 +51,13 @@
         (recur (inc cur-start)
                (dec cur-end)
                (->> [[start cur-end] [cur-start end]]
-                    (map #(vector % (and (= (get g (first %))
-                                            (get g (second %)))
+                    (into #{})
+                    (map #(vector % (and (->> % (map (partial nth g)) (apply rows-match smudge-tolerance))
                                          (= 0 (mod (palindrome-length %) 2)))))
                     (reduce #(if (second %2) (conj %1 (first %2)) %1) found)))))))
 
-(defn grid->palindrome [g]
-  (->> g find-possible-palindromes (filter (partial apply test-for-palindrome g)) first))
+(defn grid->palindrome [smudge-tolerance g]
+  (->> g (find-possible-palindromes smudge-tolerance) (filter (partial apply test-for-palindrome smudge-tolerance g)) first))
 
 (defn cols->rows [g]
   (map (fn [col]
@@ -85,8 +99,9 @@
        (grids->string)
        (spit "./output/day_thirteen.txt")))
 
-(defn part-one [s]
+(defn solve [smudge-tolerance s]
   (let [grids (->> s (string->grids))
+        grid->palindrome (partial grid->palindrome smudge-tolerance)
         row-pals (map grid->palindrome grids)
         col-pals (map (comp grid->palindrome cols->rows) grids)
         sum-cols #(->> % (filter some?) (map columns-to-the-left) (reduce + 0))]
@@ -95,4 +110,5 @@
        (* 100 (sum-cols row-pals)))))
 
 (def-solution
-  (part-one (slurp "./input/day_thirteen.txt")))
+  (solve 0 (slurp "./input/day_thirteen.txt"))
+  (solve 1 (slurp "./input/day_thirteen.txt")))
