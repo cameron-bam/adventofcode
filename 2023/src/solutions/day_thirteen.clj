@@ -1,29 +1,29 @@
 (ns day-thirteen
   (:require [clojure.string :as str]
             [lib.solution-registry :refer [def-solution]]
-            [lib.spies :refer [spy->>]]
             [clojure.math :refer [floor ceil]]))
 
-(defn rows-match [smudge-tolerance a b]
-  (let [mismatches (->> [a b]
-                        (apply map vector)
-                        (reduce (fn [acc [a' b']]
-                                  (if (= a' b')
-                                    acc
-                                    (inc acc))) 0))]
-    (>= smudge-tolerance mismatches)))
+(defn get-mismatches [a b]
+  (->> [a b]
+       (apply map vector)
+       (reduce (fn [acc [a' b']]
+                 (if (= a' b')
+                   acc
+                   (inc acc))) 0)))
 
-(defn test-for-palindrome [smudge-tolerance grid start end]
+(defn test-for-palindrome [smudge-tolerance grid start end] 
   (let [->row (partial nth grid)]
     (loop [start start
-           end end]
+           end end
+           total-mismatches 0]
       (cond
-        (< end start) true
-        (->> [start end]
-                (map ->row)
-                (apply rows-match smudge-tolerance)
-                not) false
-        :else (recur (inc start) (dec end))))))
+        (< end start) (= total-mismatches smudge-tolerance)
+        (> total-mismatches smudge-tolerance) false
+        :else (recur (inc start) (dec end)
+                     (+ total-mismatches
+                        (->> [start end]
+                             (map ->row)
+                             (apply get-mismatches))))))))
 
 (defn columns-to-the-left [[start end]]
   (let [length (- (inc end) start)
@@ -52,7 +52,7 @@
                (dec cur-end)
                (->> [[start cur-end] [cur-start end]]
                     (into #{})
-                    (map #(vector % (and (->> % (map (partial nth g)) (apply rows-match smudge-tolerance))
+                    (map #(vector % (and (>= smudge-tolerance (->> % (map (partial nth g)) (apply get-mismatches)))
                                          (= 0 (mod (palindrome-length %) 2)))))
                     (reduce #(if (second %2) (conj %1 (first %2)) %1) found)))))))
 
