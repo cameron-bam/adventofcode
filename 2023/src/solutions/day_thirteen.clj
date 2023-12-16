@@ -132,11 +132,6 @@
             (reduce + 0)
             (* 100)))))
 
-(defn cols->rows [g]
-  (map (fn [col]
-         (map #(get % col) g))
-       (range 0 (-> g first count))))
-
 (defn part-one [s]
   (let [grids (->> s (string->grids))] 
     (print-palindromes grids)))
