@@ -3,30 +3,6 @@
             [lib.solution-registry :refer [def-solution]]
             [clojure.math :refer [floor ceil]]))
 
-(def example "#.##..##.
-..#.##.#.
-##......#
-##......#
-..#.##.#.
-..##..##.
-#.#.##.#.
-
-#...##..#
-#....#..#
-..##..###
-#####.##.
-#####.##.
-..##..###
-#....#..#
-
-##.##.##.##
-.#.##.##.##
-..#.##..##.
-###....#..#
-#..#.###...
-#..#.###...
-###....#..#")
-
 (defn test-for-palindrome [line start end]
   (let [->c (partial nth line)]
     (loop [start start
@@ -36,19 +12,6 @@
         (not= (->c start)
               (->c end)) false
         :else (recur (inc start) (dec end))))))
-
-(defn get-longest-palindromes [line start end]
-  (let [do-if #(if % (%2 %3) %3)
-        search-end? (= start 0)
-        search-start? (= end (-> line count dec))]
-    (loop [cur-start start
-           cur-end end]
-      (let [start-pal? (test-for-palindrome line start cur-end)
-            end-pal? (test-for-palindrome line cur-start end)]
-        (cond
-          (or (= cur-end start) (= cur-start end)) [nil]
-          (or start-pal? end-pal?) (filter some? (conj #{} (when end-pal? [cur-start end]) (when start-pal? [start cur-end])))
-          :else (recur (do-if search-start? inc cur-start) (do-if search-end? dec cur-end)))))))
 
 (defn columns-to-the-left [[start end]]
   (let [length (- (inc end) start)
@@ -66,20 +29,21 @@
     (- (inc end) start)
     0))
 
-(defn get-shortest-palindromes [pseq]
-  (let [by-length (->> pseq
-                       (group-by palindrome-length))
-        shortest (apply min (keys by-length))]
-    (get by-length shortest)))
+(defn find-possible-palindromes [g]
+  (let [start 0 end (-> g count dec)]
+    (loop [cur-start start cur-end end found #{}]
+      (if (or (= cur-end start) (= cur-start end))
+        found
+        (recur (inc cur-start)
+               (dec cur-end)
+               (->> [[start cur-end] [cur-start end]]
+                    (map #(vector % (and (= (get g (first %))
+                                            (get g (second %)))
+                                         (= 0 (mod (palindrome-length %) 2)))))
+                    (reduce #(if (second %2) (conj %1 (first %2)) %1) found)))))))
 
 (defn grid->palindrome [g]
-  (loop [[[start end] & others] [[0  (-> g first count dec)]]]
-    (let [palindromes (->> (mapcat #(let [res (get-longest-palindromes % start end)] res) g) (into #{}))
-          short-pals (get-shortest-palindromes palindromes)]
-      (cond
-        (= 0 (palindrome-length (first short-pals))) nil
-        (= 1 (count palindromes)) (first short-pals)
-        :else (recur (concat others short-pals))))))
+  (->> g find-possible-palindromes (filter (partial apply test-for-palindrome g)) first))
 
 (defn cols->rows [g]
   (map (fn [col]
@@ -115,28 +79,20 @@
                    (str/join "\n"))))
        (str/join "\n\n")))
 
-(defn print-palindromes [grids]
-  (let [col-pals (map grid->palindrome grids) 
-        row-pals (map (comp grid->palindrome cols->rows) grids)]
-    (->> (add-top-row-indicator row-pals grids)
-         (add-left-column-indicator col-pals)
-         (grids->string)
-         (spit "./output/day_thirteen.txt"))
-    (+ (->> col-pals
-            (filter some?)
-            (map columns-to-the-left)
-            (reduce + 0))
-       (->> row-pals
-            (filter some?)
-            (map columns-to-the-left)
-            (reduce + 0)
-            (* 100)))))
+(defn print-palindromes [grids row-pals col-pals]
+  (->> (add-top-row-indicator row-pals grids)
+       (add-left-column-indicator col-pals)
+       (grids->string)
+       (spit "./output/day_thirteen.txt")))
 
 (defn part-one [s]
-  (let [grids (->> s (string->grids))] 
-    (print-palindromes grids)))
+  (let [grids (->> s (string->grids))
+        row-pals (map grid->palindrome grids)
+        col-pals (map (comp grid->palindrome cols->rows) grids)
+        sum-cols #(->> % (filter some?) (map columns-to-the-left) (reduce + 0))]
+    (print-palindromes grids row-pals col-pals)
+    (+ (sum-cols col-pals)
+       (* 100 (sum-cols row-pals)))))
 
 (def-solution
   (part-one (slurp "./input/day_thirteen.txt")))
-
-(part-one (slurp "./input/day_thirteen.txt"))
