@@ -1,7 +1,8 @@
-(ns lib.spies)
+(ns lib.spies
+  (:require [clojure.pprint :refer [pprint]]))
 
 (defn spy-fn [val]
-  (prn val)
+  (pprint val)
   val)
 
 (defn make-thread-body [body]
