@@ -1,8 +1,6 @@
 (ns day-fifteen
   (:require [clojure.string :as str]
-            [lib.solution-registry :refer [def-solution]]
-            [lib.spies :refer [spy->>]]
-            [examples :refer [day-fifteen]]))
+            [lib.solution-registry :refer [def-solution]]))
 
 (defn chars->hash [chars]
   (->> chars
@@ -58,10 +56,13 @@
         b (if (contains? b box-no) b (assoc b box-no []))
         label (chars->str label)
         focal-len (Character/getNumericValue focal-len)
+        changed? (atom false)
         new-b (update b box-no #(->> (map (fn [[label focal-len]]
-                                            [label (if (= %2 label) %3 focal-len)]) %1)
+                                            [label (if (= %2 label)
+                                                     (do (reset! changed? true) %3)
+                                                     focal-len)]) %1)
                                      (apply vector)) label focal-len)]
-    (if (not= new-b b)
+    (if @changed?
       new-b
       (update b box-no conj [label focal-len]))))
 
@@ -73,10 +74,10 @@
 
 (defn part-two [s]
   (->> (str/split s #",")
-          (apply box-op {})
-          vals
-          (map get-focusing-power)
-          (reduce + 0)))
+       (apply box-op {})
+       vals
+       (map get-focusing-power)
+       (reduce + 0)))
 
 (def-solution
   (part-one (slurp "./input/day_fifteen.txt"))
