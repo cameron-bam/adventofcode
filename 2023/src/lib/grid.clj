@@ -3,7 +3,7 @@
 
 
 (defn str->grid [s]
-  (->> s str/trim str/split-lines (map (comp #(str/split % #"") str/trim))))
+  (->> s str/trim str/split-lines (map (comp #(str/split % #"") str/trim)) (apply vector)))
 
 (defn cols->rows [g]
   (map (fn [col]
@@ -19,6 +19,14 @@
 (defn grid->str [g]
   (str/join "\n" (map str/join g)))
 
+(defn get-neighbor [pos vel]
+  (into [] (map + pos vel)))
+
+(defn get-neighbors [pos velocities]
+  (map #(get-neighbor % pos) velocities))
+
+(defn valid-neighbors? [grid]
+  (filter #(get-in grid %)))
 
 (defn row-diff [a* b*]
   (->> (map vector a* b*)
@@ -35,3 +43,14 @@
                  (into diff (->> rows
                                  (apply row-diff)
                                  (map (partial vector i))))) #{})))
+
+(defn coords [grid]
+  (for [i (range 0 (count grid))
+        j (range 0 (count (first grid)))]
+    [i j]))
+
+(defn grid-map [f grid]
+  (reduce (fn [grid pos]
+            (update-in grid pos f))
+          grid
+          (coords grid)))

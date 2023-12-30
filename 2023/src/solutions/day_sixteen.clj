@@ -42,7 +42,6 @@
 (defn part-one [input]
   (->> input
        (grid/str->grid)
-       (apply vector)
        get-energized-squares
        count))
 
@@ -56,9 +55,7 @@
     (concat tops sides)))
 
 (defn part-two [input]
-  (let [grid (->> input
-                  grid/str->grid
-                  (apply vector)) ]
+  (let [grid (grid/str->grid input)]
     (transduce
      (comp
       (map #(get-energized-squares grid {} (first %) (second %)))
