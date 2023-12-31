@@ -1,10 +1,8 @@
 (ns day-eighteen
   (:require [examples :refer [day-eighteen]]
-            [lib.grid :refer [angle-delta rotate-velocity empty-grid angle]]
+            [lib.grid :refer [angle-delta get-neighbor]]
             [lib.solution-registry :refer [def-solution]]
-            [clojure.string :as str]
-            [clojure.pprint :refer [pprint *print-right-margin*]]
-            [clojure.java.io :as jio]))
+            [clojure.string :as str]))
 
 (defn dir->vel [dir]
   (case dir
@@ -13,97 +11,88 @@
     "L" [0 -1]
     "U" [-1 0]))
 
-(defn str->dig-plan [s]
+(defn row->instruction [r]
+  (let [[dir steps color] r]
+    (hash-map :vel (dir->vel dir) :steps (Integer/parseInt steps) :color color)))
+
+(defn str->dig-plan [s parse-row]
   (->> (str/split-lines s)
        (map str/trim)
        (map #(str/split % #" "))
-       (map #(let [[dir steps color] %]
-               (hash-map :vel (dir->vel dir) :steps (Integer/parseInt steps) :color color)))
+       (map parse-row)
        (assoc {} :dig-plan)))
 
-(defn get-path-segment [pos {:keys [vel steps]}]
-  (reduce (fn [acc _]
-            (let [prev (or (peek acc) pos)]
-              (conj acc (mapv + prev vel)))) [] (range 0 steps)))
+(defn get-rotational-direction [{:keys [dig-plan] :as context}]
+  (assoc context :rotational-direction (->> dig-plan (mapv :vel) (#(conj % (first %))) (angle-delta) (#(/ % 360)) int)))
 
-(defn get-path [{:keys [dig-plan] :as context}]
-  (loop [[step & dig-plan] dig-plan 
-         path {}
-         pos [0 0]
-         dirs []]
-    (if (empty? step)
-      (let [dirs (conj dirs (first dirs))]
-        (assoc context :path path :rotational-direction (/ (angle-delta dirs) 360)))
-      (let [path-segment (get-path-segment pos step)]
-        (recur dig-plan
-               (reduce (fn [path [pos next]]
-                         (assoc path pos {:next next :vel (:vel step)}))
-                       (assoc path pos {:next (first path-segment)
-                                           :vel (:vel step)})
-                       (map vector (butlast path-segment) (rest path-segment)))
-               (last path-segment)
-               (conj dirs (:vel step)))))))
+(defn get-vertices [{:keys [rotational-direction dig-plan] :as context}] 
+  (assoc context :dig-plan
+         (reduce (fn [acc [{:keys [steps vel] :as cur-step} next-step]]
+                   (let [{cur :end last-vel :vel} (or (-> acc peek) {:vel (:vel (last dig-plan))
+                                                                     :end [0 0]})
+                         next-rotation (int (/ (angle-delta [last-vel vel (:vel next-step)]) 180))
+                         ;; need to make sure that we are using cartesian coordinates that
+                         ;; correctly capture the area of the trench and the basin
+                         step-transform (cond
+                                          (= next-rotation rotational-direction) inc
+                                          (= (* -1 next-rotation) rotational-direction) dec
+                                          :else identity)]
+                     (conj acc (assoc cur-step
+                                      :start cur
+                                      :end (get-neighbor cur (map (partial * (step-transform steps)) vel))))))
+                 [] (map vector dig-plan (conj (apply vector (rest dig-plan)) (first dig-plan))))))
 
-(defn path-seq
-  ([path start]
-   (path-seq path start (get path start)))
-  ([path start cur]
-   (cond
-     (nil? cur) (list)
-     (= (:next cur) start) (list cur)
-     :else (cons cur (lazy-seq (path-seq path start (get path (:next cur))))))))
+(defn trap-area [[y1 x1] [y2 x2]]
+  (/ (* (+ y1 y2)
+        (- x1 x2)) 2))
 
-(defn fill-seq [path vel cur]
-  (let [next (->> (map + cur vel)
-                  (mapv int))]
-    (if (contains? path next)
-      (list)
-      (cons next (lazy-seq (fill-seq path vel next))))))
+(defn dig-plan-inst->trap-area [{:keys [start end] :as inst}]
+  (assoc inst :area (trap-area start end)))
 
-(defn get-trench-area [{:keys [path rotational-direction] :as context}] 
-  (loop [[cur & path-list] (path-seq path [0 0])
-         basin #{}
-         iters 0]
-    (if (nil? cur)
-      (assoc context :basin basin)
-      (let [{:keys [vel next]} cur
-            fill-vel (rotate-velocity vel (* rotational-direction 90))
-            is-inside-corner? (some-> path-list first :vel (angle fill-vel) abs int (= 180))
-            nodes (cond-> (fill-seq path fill-vel next)
-                    is-inside-corner? (concat (fill-seq path vel next)))]
-        (recur path-list
-               (into basin nodes)
-               (inc iters))))))
+(defn shift-to-positive-coors [{:keys [dig-plan] :as context}]
+  (let [coords (into #{} (map :start dig-plan))
+        min-row (apply min (map first coords))
+        min-col (apply min (map second coords))
+        get-off #(if (<= % 0) (+ 1 (* -1 %)) 0)
+        roff (get-off min-row)
+        coff (get-off min-col)
+        apply-offset #(vector (+ (first %) roff) (+ (second %) coff))]
+    (assoc context :dig-plan (map #(-> %
+                                       (update :start apply-offset)
+                                       (update :end apply-offset)) dig-plan))))
 
-(defn get-min-max [coll]
-  (reduce (fn [[a b] step]
-            [(min a step) (max b step)])
-          [Integer/MAX_VALUE 0] coll))
-
-(defn render-trench-and-basin [{:keys [path basin] :as context}]
-  (let [path-coords (keys path)
-        [min-rows max-rows] (get-min-max (map first path-coords))
-        [min-cols max-cols] (get-min-max (map second path-coords))
-        row-offset (max (* -1 min-rows) 0)
-        col-offset (max (* -1 min-cols) 0)
-        apply-offset #(vector (+ (first %) row-offset) (+ (second %) col-offset))
-        grid (empty-grid (+ max-rows row-offset) (+ col-offset max-cols) '.)
-        grid (reduce #(assoc-in %1 %2 'P) grid (map apply-offset path-coords))
-        grid (reduce #(assoc-in %1 %2 '*) grid (map apply-offset basin))]
-    (with-open [w (jio/writer "./output/day_eighteen.txt")]
-      (binding [*print-right-margin* (* 3 (+ col-offset max-cols))]
-        (pprint grid w)))
-    context))
+(defn get-area [context]
+  (->> context
+       get-rotational-direction
+       get-vertices
+       shift-to-positive-coors
+       (#(update % :dig-plan (fn [coll] (map dig-plan-inst->trap-area coll))))
+       :dig-plan
+       (map :area)
+       (reduce + 0)))
 
 (defn part-one [s]
-  (-> s
-      str->dig-plan
-      get-path
-      get-trench-area
-      #_render-trench-and-basin
-      (#(+ (-> % :basin count) (-> % :path count)))))
+  (->> (str->dig-plan s row->instruction)
+       get-area))
+
+(defn color->instruction [r]
+  (let [[_ _ color] r
+        num (Integer/parseInt (subs color 2 (dec (count color))) 16)
+        dir (mod num 16)
+        distance (/ (- num dir) 16)]
+    [color (subs color 2 (dec (count color))) distance dir]
+    (hash-map :vel (dir->vel (case dir
+                               0 "R"
+                               1 "D"
+                               2 "L"
+                               3 "U")) :steps distance)))
+
+(defn part-two [s]
+  (->> (str->dig-plan s color->instruction)
+       get-area))
 
 (def-solution
-  (part-one (slurp "./input/day_eighteen.txt")))
+  (part-one (slurp "./input/day_eighteen.txt"))
+  (part-two (slurp "./input/day_eighteen.txt")))
 
 (part-one day-eighteen)
