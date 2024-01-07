@@ -1,6 +1,7 @@
 (ns day-five
   (:require [clojure.string :as str]
-            [lib.solution-registry :refer [def-solution]]))
+            [lib.solution-registry :refer [def-solution]]
+            [lib.interval :refer [compare-range]]))
 
 (defn dispatch [part & _] part)
 
@@ -48,21 +49,6 @@
 (defmethod solve :part-one [_ maps seeds]
   (->> (map (partial get-seed-location maps) seeds)
        (apply min)))
-
-(defn compare-range [[a a_len] [b b_len]]
-  (if (>= b (+ a a_len))
-    3 ; "0011"
-    (if (> b a)
-      (if (>= (+ b b_len) (+ a a_len))
-        5 ;; 0101
-        6 ;; 0110
-        )
-      (if (>= (+ b b_len) (+ a a_len))
-        9 ;; 1001
-        (if (<= (+ b b_len) a)
-          12 ;; 1100
-          10 ;; 1010
-          )))))
 
 (defn split-seed-range
   ([[dest & map-range] seed-range]
