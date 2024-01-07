@@ -45,7 +45,7 @@
 ....O#...O
 .......OOO
 #..OO###..
-#.OOO#...O" 
+#.OOO#...O"
                    ".....#....
 ....#...O#
 .....##...
@@ -120,16 +120,27 @@ hdj{m>838:A,pv}
 {x=2127,m=1623,a=2188,s=1013}")
 
 
-(def day-twenty [
-                 "broadcaster -> a, b, c
+(def day-twenty ["broadcaster -> a, b, c
 %a -> b
 %b -> c
 %c -> inv
 &inv -> a"
-                 
+
                  "broadcaster -> a
 %a -> inv, con
 &inv -> b
 %b -> con
-&con -> output"
-] )
+&con -> output"])
+
+
+(def day-twenty-one "...........
+.....###.#.
+.###.##..#.
+..#.#...#..
+....#.#....
+.##..S####.
+.##..#...#.
+.......##..
+.##.#.####.
+.##..##.##.
+...........")
